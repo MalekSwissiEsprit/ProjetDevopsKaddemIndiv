@@ -48,7 +48,7 @@ public class UniversiteServiceImplTest {
         universite = new Universite();
 
         universite.setIdUniv(1);
-        universite.setNomUniv("Université Test");
+        universite.setNomUniv("Université Test111");
 
         departement = new Departement();
 
