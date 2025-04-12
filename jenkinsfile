@@ -1,7 +1,9 @@
 pipeline {
     agent any
-    tools {
-        maven 'M2_HOME' // Assurez-vous que Maven est configuré dans "Global Tool Configuration"
+    environment {
+        JAVA_HOME = tool name: 'JAVA_HOME', type: 'jdk' // Assurez-vous que 'JAVA_HOME' est configuré dans Jenkins
+        M2_HOME = tool name: 'M2_HOME', type: 'maven'   // Assurez-vous que 'M2_HOME' est configuré dans Jenkins
+        PATH = "${JAVA_HOME}/bin:${M2_HOME}/bin:${env.PATH}" // Ajout correct au PATH
     }
     stages {
         stage('Checkout') {
@@ -10,41 +12,28 @@ pipeline {
                 git branch: 'main', url: 'https://github.com/MalekSwissiEsprit/ProjetDevopsKaddemIndiv.git'
             }
         }
-        stage('Build & Test') {
+        stage('Compile Stage') {
             steps {
-                // Changer de répertoire vers le dossier du projet (kaddem)
-                dir('kaddem') {
-                    // Exécuter les tests unitaires avec Maven
-                    sh 'mvn clean test'
-                }
-            }
-            post {
-                always {
-                    // Publier les résultats des tests JUnit
-                    junit 'kaddem/target/surefire-reports/*.xml'
-                }
+                sh 'mvn clean compile' // Nettoie et compile le projet
             }
         }
-        stage('Package') {
+        stage('Test Stage') {
             steps {
-                // Changer de répertoire vers le dossier du projet (kaddem)
-                dir('kaddem') {
-                    // Construire le JAR sans relancer les tests
-                    sh 'mvn package -DskipTests'
-                }
+                sh 'mvn test' // Exécute les tests unitaires
+            }
+        }
+        stage('Maven Install') {
+            steps {
+                sh 'mvn install' // Installe le projet dans le dépôt local Maven
             }
         }
     }
     post {
-        always {
-            // Archiver le JAR généré
-            archiveArtifacts artifacts: 'kaddem/target/*.jar', allowEmptyArchive: true
-        }
         success {
-            echo 'Build et tests réussis !'
+            echo 'Pipeline terminé avec succès !'
         }
         failure {
-            echo 'Échec du build ou des tests.'
+            echo 'Le pipeline a échoué. Vérifiez les logs.'
         }
     }
 }
