@@ -2,6 +2,7 @@ pipeline {
     agent any
     tools {
         maven 'M2_HOME' // Ensure Maven is configured in Jenkins Global Tool Configuration
+        jdk 'JDK11'     // Matches java.version=11 from pom.xml
     }
     stages {
         stage('Git Checkout') {
@@ -10,8 +11,35 @@ pipeline {
                     url: 'https://github.com/MalekSwissiEsprit/ProjetDevopsKaddemIndiv.git'
             }
         }
-       
-       
+        stage('Build & Test') {
+            steps {
+                dir('kaddem1/kaddem') { // Navigate to the project directory containing pom.xml
+                    sh 'mvn clean test'
+                }
+            }
+            post {
+                always {
+                    junit 'kaddem1/kaddem/**/target/surefire-reports/*.xml' // Publish JUnit test results
+                }
+            }
+        }
+        stage('Package') {
+            steps {
+                dir('kaddem1/kaddem') {
+                    sh 'mvn clean package -DskipTests' // Skip tests since already run
+                }
+            }
+        }
     }
-   
+    post {
+        always {
+            cleanWs() // Clean workspace after build
+        }
+        success {
+            echo 'Build completed successfully!'
+        }
+        failure {
+            echo 'Build failed!'
+        }
+    }
 }
