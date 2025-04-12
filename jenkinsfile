@@ -1,45 +1,50 @@
 pipeline {
     agent any
     tools {
-        maven 'M2_HOME' // Ensure Maven is configured in Jenkins Global Tool Configuration
-      
+        maven 'M2_HOME' // Assurez-vous que Maven est configuré dans "Global Tool Configuration"
     }
     stages {
-        stage('Git Checkout') {
+        stage('Checkout') {
             steps {
-                git branch: 'main', 
-                    url: 'https://github.com/MalekSwissiEsprit/ProjetDevopsKaddemIndiv.git'
+                // Cloner le dépôt GitHub
+                git branch: 'main', url: 'https://github.com/MalekSwissiEsprit/ProjetDevopsKaddemIndiv.git'
             }
         }
         stage('Build & Test') {
             steps {
-                dir('kaddem1/kaddem') { // Navigate to the project directory containing pom.xml
+                // Changer de répertoire vers le dossier du projet (kaddem)
+                dir('kaddem') {
+                    // Exécuter les tests unitaires avec Maven
                     sh 'mvn clean test'
                 }
             }
             post {
                 always {
-                    junit 'kaddem1/kaddem/**/target/surefire-reports/*.xml' // Publish JUnit test results
+                    // Publier les résultats des tests JUnit
+                    junit 'kaddem/target/surefire-reports/*.xml'
                 }
             }
         }
         stage('Package') {
             steps {
-                dir('kaddem1/kaddem') {
-                    sh 'mvn clean package -DskipTests' // Skip tests since already run
+                // Changer de répertoire vers le dossier du projet (kaddem)
+                dir('kaddem') {
+                    // Construire le JAR sans relancer les tests
+                    sh 'mvn package -DskipTests'
                 }
             }
         }
     }
     post {
         always {
-            cleanWs() // Clean workspace after build
+            // Archiver le JAR généré
+            archiveArtifacts artifacts: 'kaddem/target/*.jar', allowEmptyArchive: true
         }
         success {
-            echo 'Build completed successfully!'
+            echo 'Build et tests réussis !'
         }
         failure {
-            echo 'Build failed!'
+            echo 'Échec du build ou des tests.'
         }
     }
 }
