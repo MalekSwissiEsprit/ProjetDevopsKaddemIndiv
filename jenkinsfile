@@ -1,39 +1,35 @@
 pipeline {
     agent any
-    environment {
-        JAVA_HOME = tool name: 'JAVA_HOME', type: 'jdk' // Assurez-vous que 'JAVA_HOME' est configuré dans Jenkins
-        M2_HOME = tool name: 'M2_HOME', type: 'maven'   // Assurez-vous que 'M2_HOME' est configuré dans Jenkins
-        PATH = "${JAVA_HOME}/bin:${M2_HOME}/bin:${env.PATH}" // Ajout correct au PATH
+    tools {
+        maven 'M2_HOME' // Ensure Maven is configured in Jenkins Global Tool Configuration
     }
     stages {
-        stage('Checkout') {
+        stage('Git Checkout') {
             steps {
-                // Cloner le dépôt GitHub
-                git branch: 'main', url: 'https://github.com/MalekSwissiEsprit/ProjetDevopsKaddemIndiv.git'
+                git branch: 'main', 
+                    url: 'https://github.com/MalekSwissiEsprit/ProjetDevopsKaddemIndiv.git'
             }
         }
-        stage('Compile Stage') {
+        stage('Build') {
             steps {
-                sh 'mvn clean compile' // Nettoie et compile le projet
+                sh 'mvn clean package'
             }
         }
-        stage('Test Stage') {
+        stage('Test') {
             steps {
-                sh 'mvn test' // Exécute les tests unitaires
-            }
-        }
-        stage('Maven Install') {
-            steps {
-                sh 'mvn install' // Installe le projet dans le dépôt local Maven
+                sh 'mvn test'
             }
         }
     }
     post {
+        always {
+            cleanWs() // Clean workspace after build
+        }
         success {
-            echo 'Pipeline terminé avec succès !'
+            echo 'Build completed successfully!'
         }
         failure {
-            echo 'Le pipeline a échoué. Vérifiez les logs.'
+            echo 'Build failed!'
         }
     }
 }
